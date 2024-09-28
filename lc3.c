@@ -63,7 +63,7 @@ uint16_t sign_extend(uint16_t x, int bit_count)
         x |= (0XFFFF << bit_count);
     return x;
 }
- 
+
 void update_flags(uint16_t r)
 {
     if (reg[r] == 0)
@@ -162,6 +162,18 @@ int main(int argc, char *argv[])
             break;
 
         case OP_LDI:
+
+            // destination register (DR)
+            uint16_t r0 = (instr >> 9) & 0x7;
+
+            // PCoffset 9
+            uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+
+            // add pc_offset to the current PC, look at that memory location to get the final address
+
+            reg[r0] = mem_read(mem_read(reg[R_PC] + pc_offset));
+            update_flags(r0);
+
             break;
 
         case OP_LDR:
@@ -184,6 +196,9 @@ int main(int argc, char *argv[])
 
         case OP_RES:
         case OP_RTI:
+            abort();
+            break;
+
         default:
             break;
         };
