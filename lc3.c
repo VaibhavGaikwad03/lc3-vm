@@ -63,7 +63,7 @@ uint16_t sign_extend(uint16_t x, int bit_count)
         x |= (0XFFFF << bit_count);
     return x;
 }
-
+ 
 void update_flags(uint16_t r)
 {
     if (reg[r] == 0)
