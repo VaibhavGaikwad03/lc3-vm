@@ -52,10 +52,27 @@ enum
 
 enum
 {
-    FL_POS = 1 << 0, // P
-    FL_ZRO = 1 << 1, // Z
-    FL_NEG = 1 << 2  // N
+    FL_POS = 1 << 0, // P (Positive)
+    FL_ZRO = 1 << 1, // Z (Zero)
+    FL_NEG = 1 << 2  // N (Negative)
 };
+
+uint16_t sign_extend(uint16_t x, int bit_count)
+{
+    if ((x >> (bit_count - 1)) & 1)
+        x |= (0XFFFF << bit_count);
+    return x;
+}
+
+void update_flags(uint16_t r)
+{
+    if (reg[r] == 0)
+        reg[R_COND] = FL_ZRO;
+    else if (reg[r] >> 15) // a 1 in the left-most bit indicates negative
+        reg[R_COND] = FL_NEG;
+    else
+        reg[R_COND] = FL_POS;
+}
 
 int main(int argc, char *argv[])
 {
