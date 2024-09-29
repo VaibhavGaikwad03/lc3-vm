@@ -57,6 +57,16 @@ enum
     FL_NEG = 1 << 2  // N (Negative)
 };
 
+enum
+{
+    TRAP_GETC = 0x20,  // get character from keyboard, not echoed onto the terminal
+    TRAP_OUT = 0x21,   // output a character
+    TRAP_PUTS = 0x22,  // output a word string
+    TRAP_IN = 0x23,    // get character from keyboard, echoed onto the terminal
+    TRAP_PUTSP = 0x24, // output a byte string
+    TRAP_HALT = 0x25   // halt the program
+};
+
 uint16_t sign_extend(uint16_t x, int bit_count)
 {
     if ((x >> (bit_count - 1)) & 1)
@@ -243,24 +253,101 @@ int main(int argc, char *argv[])
             uint16_t r1 = (instr >> 6) & 0x7;
             uint16_t offset = sign_extend(instr & 0x3F, 6);
             reg[r0] = mem_read(reg[r1] + offset);
-        
+
             update_flags(r0);
 
             break;
 
         case OP_LEA:
+
+            uint16_t r0 = (instr >> 9) & 0x7;
+            uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+            reg[r0] = reg[R_PC] + pc_offset;
+
+            update_flags(r0);
+
             break;
 
         case OP_ST:
+
+            uint16_t r0 = (instr >> 9) & 0x7;
+            uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+            mem_write(reg[R_PC] + pc_offset, reg[r0]);
+
             break;
 
         case OP_STI:
+
+            uint16_t r0 = (instr >> 9) & 0x7;
+            uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+            mem_write(mem_read(reg[R_PC] + pc_offset), reg[r0]);
+
             break;
 
         case OP_STR:
+
+            uint16_t r0 = (instr >> 9) & 0x7;
+            uint16_t r1 = (instr >> 6) & 0x7;
+            uint16_t offset = sign_extend(instr & 0x3F, 6);
+            mem_write(reg[r1] + offset, reg[r0]);
+
             break;
 
         case OP_TRAP:
+
+            reg[R_R7] = reg[R_PC];
+
+            switch (instr & 0xFF)
+            {
+            case TRAP_GETC:
+
+                // read a single ASCII char
+                reg[R_R0] = (uint16_t)getchar();
+                update_flags(R_R0);
+
+                break;
+
+            case TRAP_OUT:
+
+                putc((char)reg[R_R0], stdout);
+                fflush(stdout);
+
+                break;
+
+            case TRAP_PUTS:
+
+                uint16_t *c = memory + reg[R_R0];
+
+                while (*c)
+                {
+                    putc((char)*c, stdout);
+                    c++;
+                }
+                fflush(stdout);
+
+                break;
+
+            case TRAP_IN:
+
+                printf("Enter a character: ");
+                char c = getchar();
+                putc(c, stdout);
+                fflush(stdout);
+                reg[R_R0] = (uint16_t)c;
+                update_flags(R_R0);
+
+                break;
+
+            case TRAP_PUTSP:
+
+                
+
+                break;
+
+            case TRAP_HALT:
+                break;
+            }
+
             break;
 
         case OP_RES:
