@@ -467,7 +467,7 @@ int main(int argc, char *argv[])
                 running = 0;
             }
 
-            break;
+            break; 
             }
         }
 
